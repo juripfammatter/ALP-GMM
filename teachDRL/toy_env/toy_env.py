@@ -34,7 +34,16 @@ class ToyEnv(object):  # n-dimensional grid
         score = np.where(self.cube_competence > (3*(self.max_per_cube/4)))  #
         return (len(score[0]) / self.nb_total_cubes)*100
 
-    def episode(self, param):
+    def episode(self, param:np.ndarray) -> float:
+        """
+        Simulates an episode with the given parameter vector.
+
+        Args:
+            param (np.ndarray): A 1D array representing the parameter vector.
+
+        Returns:
+            float: The competence score for the given parameter vector.
+        """
         # Ensure param values fall in bounds
         for v in param:
             if (v < 0.0) or (v > 1.0):
@@ -234,7 +243,7 @@ def test_random(env, nb_episodes, nb_dims=2, gif=False, score_step=1000, verbose
 
 
 if __name__=="__main__":
-    nb_episodes = 20000
+    nb_episodes = 2000
     nb_dims = 2
     nb_cubes = 10
     score_step = 1000
@@ -250,7 +259,7 @@ if __name__=="__main__":
     # all_scores.append(test_riac(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
     # env.reset()
     print('Testing ALP-GMM...')
-    all_scores.append(test_alpgmm(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
+    all_scores.append(test_alpgmm(env, nb_episodes, gif=False, nb_dims=nb_dims, score_step=score_step, verbose=False))
     env.reset()
     # print('Testing Covar-GMM...')
     # all_scores.append(test_covar_gmm(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))

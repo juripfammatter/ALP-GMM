@@ -1,10 +1,10 @@
-from sklearn.mixture import GaussianMixture as GMM
+from sklearn.mixture import GaussianMixture as GMM, GaussianMixture
 import numpy as np
 from gym.spaces import Box
 from teachDRL.teachers.utils.dataset import BufferedDataset
 
 
-def proportional_choice(v, eps=0.):
+def proportional_choice(v:list, eps:float=0.0):
     if np.sum(v) == 0 or np.random.rand() < eps:
         return np.random.randint(np.size(v))
     else:
@@ -14,11 +14,19 @@ def proportional_choice(v, eps=0.):
 # Absolute Learning Progress (ALP) computer object
 # It uses a buffered kd-tree to efficiently implement a k-nearest-neighbor algorithm
 class EmpiricalALPComputer():
-    def __init__(self, task_size, max_size=None, buffer_size=500):
+    def __init__(self, task_size:int, max_size:int|None=None, buffer_size:int=500):
+        """
+        Empirical ALP computer using k-nearest-neighbors
+
+        Args:
+            task_size (int): dimension of the task space
+            max_size (int|None, optional): maximal number of (task,reward) pairs to store. If None, no limit. Defaults to None.
+            buffer_size (int, optional): size of the buffer used in the buffered kd-tree. See BufferedDataset for details. Defaults to 500.
+        """
         self.alp_knn = BufferedDataset(1, task_size, buffer_size=buffer_size, lateness=0, max_size=max_size)
 
-    def compute_alp(self, task, reward):
-        alp = 0
+    def compute_alp(self, task:np.array, reward:float) -> float:
+        alp = 0.0
         if len(self.alp_knn) > 5:
             # Compute absolute learning progress for new task
             
@@ -39,7 +47,15 @@ class EmpiricalALPComputer():
 # Absolute Learning Progress - Gaussian Mixture Model
 # mins / maxs are vectors defining task space boundaries (ex: mins=[0,0,0] maxs=[1,1,1])
 class ALPGMM():
-    def __init__(self, mins, maxs, seed=None, params=dict()):
+    def __init__(self, mins:list[float], maxs:list[float], seed:int|None=None, params:dict=dict()):
+        """
+        ALP-GMM teacher algorithm
+        Args:
+            mins (list[float]): minimum value for each task parameter
+            maxs (list[float]): maximum value for each task parameter
+            seed (int|None, optional): random seed. If None, a random seed is chosen. Defaults to None.
+            params (dict, optional): dictionary of hyperparameters. See code for details. Defaults to {}.
+        """
         self.seed = seed
         if not seed:
             self.seed = np.random.randint(42,424242)
@@ -57,7 +73,7 @@ class ALPGMM():
         self.gmm_fitness_fun = "aic" if "gmm_fitness_fun" not in params else params["gmm_fitness_fun"]
         # Number of Expectation-Maximization trials when fitting
         self.nb_em_init = 1 if "nb_em_init" not in params else params['nb_em_init']
-        # Number of episodes between two fit of the GMM
+        # Number of episodes between two fit of the GMM (N in the paper)
         self.fit_rate = 250 if "fit_rate" not in params else params['fit_rate']
         self.nb_random = self.fit_rate  # Number of bootstrapping episodes
 
@@ -72,20 +88,20 @@ class ALPGMM():
         # Init ALP computer
         self.alp_computer = EmpiricalALPComputer(len(mins), max_size=alp_max_size, buffer_size=alp_buffer_size)
 
-        self.tasks = []
-        self.alps = []
-        self.tasks_alps = []
+        self.tasks: list[np.ndarray] = []
+        self.alps: list[float] = []
+        self.tasks_alps: list[np.ndarray] = []
 
         # Init GMMs
-        self.potential_gmms = [self.init_gmm(k) for k in self.potential_ks]
+        self.potential_gmms: list[GaussianMixture] = [self.init_gmm(k) for k in self.potential_ks]
 
         # Boring book-keeping
         self.bk = {'weights': [], 'covariances': [], 'means': [], 'tasks_alps': [], 'episodes': []}
 
-    def init_gmm(self, nb_gaussians):
+    def init_gmm(self, nb_gaussians:int)-> GMM:
         return GMM(n_components=nb_gaussians, covariance_type='full', random_state=self.seed,
                                             warm_start=self.warm_start, n_init=self.nb_em_init)
-    def get_nb_gmm_params(self, gmm):
+    def get_nb_gmm_params(self, gmm:GaussianMixture) -> int:
         # assumes full covariance
         # see https://stats.stackexchange.com/questions/229293/the-number-of-parameters-in-gaussian-mixture-model
         nb_gmms = gmm.get_params()['n_components']
@@ -93,10 +109,18 @@ class ALPGMM():
         params_per_gmm = (d*d - d)/2 + 2*d + 1
         return nb_gmms * params_per_gmm - 1
 
-    def update(self, task, reward):
+    def update(self, task:np.ndarray, reward:float) -> None:
+        """
+        Update ALP-GMM with new (task, reward) pair
+
+        Args:
+            task (np.ndarray): 1D task parameters array
+            reward (float): reward obtained by the agent for this task
+        """
+
         self.tasks.append(task)
 
-        # Compute corresponding ALP
+        # Compute corresponding ALP§§§§
         self.alps.append(self.alp_computer.compute_alp(task, reward))
 
         # Concatenate task vector with ALP dimension
@@ -112,7 +136,7 @@ class ALPGMM():
 
                 # 3 - Compute fitness and keep best GMM
                 fitnesses = []
-                if self.gmm_fitness_fun == 'bic':  # Bayesian Information Criterion
+                if self.gmm_fitness_fun == 'bic':  # Bayesian Information Criterionobs
                     fitnesses = [m.bic(cur_tasks_alps) for m in self.potential_gmms]
                 elif self.gmm_fitness_fun == 'aic':  # Akaike Information Criterion
                     fitnesses = [m.aic(cur_tasks_alps) for m in self.potential_gmms]
@@ -135,7 +159,13 @@ class ALPGMM():
                 self.bk['tasks_alps'] = self.tasks_alps
                 self.bk['episodes'].append(len(self.tasks))
 
-    def sample_task(self):
+    def sample_task(self)-> np.ndarray:
+        """
+        Sample a new task using the ALP-GMM strategy
+
+        Returns:
+            new_task (np.ndarray): sampled task parameters
+        """
         if (len(self.tasks) < self.nb_random) or (np.random.random() < self.random_task_ratio):
             # Random task sampling
             new_task = self.random_task_generator.sample()
