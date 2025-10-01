@@ -12,7 +12,7 @@ setup(
     version="0.1",
     install_requires=[
         'cloudpickle==1.2.0',
-        'gym[atari,box2d,classic_control]>=0.10.8',
+        'gym[atari,classic_control]>=0.10.8',
         'ipython',
         'joblib',
         'matplotlib',
@@ -21,14 +21,15 @@ setup(
         'pytest',
         'psutil',
         'scipy',
-        'sklearn',
+        'scikit-learn',
         'imageio',
-        'seaborn==0.8.1',
-        'tensorflow<=1.16.0',
+        'seaborn',
+        'tensorflow',
         'setuptools',
         'treelib',
         'gizeh',
-        'tqdm'
+        'tqdm',
+        'PyQt5'
     ],
     description="Teacher algorithms for curriculum learning of Deep RL in continuously parameterized environments",
     author="Rémy Portelas",

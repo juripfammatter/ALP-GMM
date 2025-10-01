@@ -2,12 +2,12 @@
 # WARNING ugly code, sorry
 
 import matplotlib.patches as patches
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.colorbar as cbar
 import matplotlib.pyplot as plt
 import imageio
 import numpy as np
-import copy
+# import copy
 import os
 from matplotlib.patches import Ellipse
 import matplotlib.colors as colors
@@ -27,8 +27,8 @@ def unscale_vector(scaled_values, bounds=[[-1,1]]):
 
 def plt_2_rgb(ax):
     ax.figure.canvas.draw()
-    data = np.frombuffer(ax.figure.canvas.tostring_rgb(), dtype=np.uint8)
-    data = data.reshape(ax.figure.canvas.get_width_height()[::-1] + (3,))
+    data = np.frombuffer(ax.figure.canvas.tostring_argb(), dtype=np.uint8)
+    data = data.reshape(ax.figure.canvas.get_width_height()[::-1] + (4,))
     return data
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
@@ -139,8 +139,8 @@ def draw_ellipse(position, covariance, ax=None, color=None, **kwargs):
 
     # Draw the Ellipse
     for nsig in range(2, 3):
-        ax.add_patch(Ellipse(position, nsig * width, nsig * height,
-                             angle, **kwargs, color=color))
+        ax.add_patch(Ellipse(xy=position, width=nsig * width, height=nsig * height,
+                             angle=angle, **kwargs, color=color))
 
 def draw_competence_grid(ax, comp_grid, x_bnds, y_bnds, bar=True):
     comp_grid[comp_grid == 100] = 1000

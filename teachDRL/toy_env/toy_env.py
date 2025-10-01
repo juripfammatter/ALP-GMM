@@ -241,18 +241,19 @@ if __name__=="__main__":
     env = ToyEnv(nb_dims=nb_dims, nb_cubes=nb_cubes)
     all_scores = []
     colors = ['grey','orange','blue','green']
-    labels = ['Random', 'RIAC', 'ALP-GMM', 'Covar-GMM']
-    print('Testing Random...')
-    all_scores.append(test_random(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
-    env.reset()
-    print('Testing RIAC...')
-    all_scores.append(test_riac(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
-    env.reset()
+    # labels = ['Random', 'RIAC', 'ALP-GMM', 'Covar-GMM']
+    labels = ['ALP-GMM']
+    # print('Testing Random...')
+    # all_scores.append(test_random(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
+    # env.reset()
+    # print('Testing RIAC...')
+    # all_scores.append(test_riac(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
+    # env.reset()
     print('Testing ALP-GMM...')
     all_scores.append(test_alpgmm(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
     env.reset()
-    print('Testing Covar-GMM...')
-    all_scores.append(test_covar_gmm(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
+    # print('Testing Covar-GMM...')
+    # all_scores.append(test_covar_gmm(env, nb_episodes, gif=True, nb_dims=nb_dims, score_step=score_step, verbose=True))
 
 
     # Plot evolution of % of mastered hypercubes
